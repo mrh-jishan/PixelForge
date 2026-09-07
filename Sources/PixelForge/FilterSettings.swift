@@ -95,10 +95,25 @@ public enum RetroPalette: String, CaseIterable, Identifiable {
             return [0x000033, 0x0000ff, 0x00ffff, 0x00ff00, 0xffff00, 0xff0000, 0xffffff]
         }
     }
+    
+    public var shortName: String {
+        switch self {
+        case .gameBoy: return "Game Boy"
+        case .cgaMode1: return "CGA PC"
+        case .cyberpunk: return "Cyberpunk"
+        case .amberCRT: return "Amber CRT"
+        case .matrixGreen: return "Matrix Green"
+        case .commodore64: return "Commodore 64"
+        case .thermalHeatmap: return "Heatmap"
+        }
+    }
 }
 
 public struct FilterParams: Equatable {
     public var category: FilterCategory = .pixelate
+    
+    // Dedicated Active Palette (optional across all modes)
+    public var activePalette: RetroPalette? = nil
     
     // Pixelation Parameters
     public var pixelSize: Double = 16.0         // 1 to 128

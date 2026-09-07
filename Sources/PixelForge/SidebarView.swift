@@ -43,6 +43,11 @@ public struct SidebarView: View {
                 
                 Divider()
                 
+                // Dedicated Retro Palettes Section (Always Visible)
+                dedicatedPaletteSection
+                
+                Divider()
+                
                 // Global Adjustments
                 globalColorControls
                 
@@ -287,33 +292,6 @@ public struct SidebarView: View {
     // MARK: - Retro Palette Controls
     private var retroPaletteControls: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("RETRO PALETTES")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundColor(.secondary)
-            
-            Picker("Palette", selection: Binding(
-                get: { state.filterParams.retroPalette },
-                set: { state.filterParams.retroPalette = $0; state.scheduleProcess() }
-            )) {
-                ForEach(RetroPalette.allCases) { p in
-                    Text(p.rawValue).tag(p)
-                }
-            }
-            
-            // Palette Swatches
-            HStack(spacing: 4) {
-                ForEach(Array(state.filterParams.retroPalette.colors.enumerated()), id: \.offset) { _, c in
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color(
-                            red: Double((c >> 16) & 0xFF) / 255.0,
-                            green: Double((c >> 8) & 0xFF) / 255.0,
-                            blue: Double(c & 0xFF) / 255.0
-                        ))
-                        .frame(height: 20)
-                }
-            }
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary.opacity(0.3), lineWidth: 1))
-            
             // Pixel Size
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -337,6 +315,121 @@ public struct SidebarView: View {
             .font(.subheadline)
         }
     }
+    
+    // MARK: - Dedicated Retro Palettes Section (Always Visible)
+    private var dedicatedPaletteSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("RETRO PALETTES")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
+                Spacer()
+                if state.filterParams.activePalette != nil {
+                    Button("Full Color") {
+                        state.filterParams.activePalette = nil
+                        state.scheduleProcess()
+                    }
+                    .font(.system(size: 10, weight: .semibold))
+                    .buttonStyle(.borderless)
+                    .foregroundColor(.accentColor)
+                }
+            }
+            
+            // Grid of visual palette cards with swatches
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                // Full Color card
+                Button(action: {
+                    state.filterParams.activePalette = nil
+                    state.scheduleProcess()
+                }) {
+                    let isSelected = (state.filterParams.activePalette == nil && state.filterParams.category != .retroPalette)
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack {
+                            Text("Full Color")
+                                .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                .foregroundColor(isSelected ? .primary : .secondary)
+                            Spacer()
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.accentColor)
+                                    .font(.system(size: 10))
+                            }
+                        }
+                        
+                        LinearGradient(
+                            colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 12)
+                        .cornerRadius(2.5)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(isSelected ? Color.accentColor.opacity(0.12) : Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(isSelected ? Color.accentColor : Color.primary.opacity(0.08), lineWidth: isSelected ? 1.5 : 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // All 7 Retro Palettes with visual color swatches
+                ForEach(RetroPalette.allCases) { pal in
+                    let isSelected = (state.filterParams.activePalette == pal || (state.filterParams.category == .retroPalette && state.filterParams.retroPalette == pal))
+                    Button(action: {
+                        state.filterParams.activePalette = pal
+                        state.filterParams.retroPalette = pal
+                        state.scheduleProcess()
+                    }) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text(pal.shortName)
+                                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                    .foregroundColor(isSelected ? .primary : .secondary)
+                                    .lineLimit(1)
+                                Spacer()
+                                if isSelected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.accentColor)
+                                        .font(.system(size: 10))
+                                }
+                            }
+                            
+                            // Visual Color Swatch Strip
+                            HStack(spacing: 2) {
+                                ForEach(Array(pal.colors.enumerated()), id: \.offset) { _, c in
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color(
+                                            red: Double((c >> 16) & 0xFF) / 255.0,
+                                            green: Double((c >> 8) & 0xFF) / 255.0,
+                                            blue: Double(c & 0xFF) / 255.0
+                                        ))
+                                        .frame(height: 12)
+                                }
+                            }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 2)
+                                    .stroke(Color.primary.opacity(0.12), lineWidth: 0.5)
+                            )
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(isSelected ? Color.accentColor.opacity(0.12) : Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? Color.accentColor : Color.primary.opacity(0.08), lineWidth: isSelected ? 1.5 : 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+            }
+        }
+    }
+}
     
     // MARK: - CRT Arcade Controls
     private var crtArcadeControls: some View {

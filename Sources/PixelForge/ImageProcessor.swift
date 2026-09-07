@@ -139,8 +139,9 @@ public final class ImageProcessor {
             }
             
         case .retroPalette:
+            let pal = params.activePalette ?? params.retroPalette
             if let baseCG = ciContext.createCGImage(currentCI, from: extent) {
-                intermediateCG = DitheringAndPalettes.applyPalette(to: baseCG, palette: params.retroPalette)
+                intermediateCG = DitheringAndPalettes.applyPalette(to: baseCG, palette: pal)
             }
             
         case .crtArcade:
@@ -150,6 +151,13 @@ public final class ImageProcessor {
         }
         
         guard var finalCG = intermediateCG else { return nil }
+        
+        // Apply active palette if selected across any mode
+        if params.category != .retroPalette, let pal = params.activePalette {
+            if let mapped = DitheringAndPalettes.applyPalette(to: finalCG, palette: pal) {
+                finalCG = mapped
+            }
+        }
         
         // 4. Overlays: Pixel Grid Overlay
         if params.showPixelGrid && params.pixelSize > 2.0 {

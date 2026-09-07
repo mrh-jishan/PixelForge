@@ -109,6 +109,7 @@ public final class AppState: ObservableObject {
         case .original:
             p.pixelSize = 1.0
             p.category = .pixelate
+            p.activePalette = nil
             
         case .chunky8Bit:
             p.category = .pixelate
@@ -116,10 +117,12 @@ public final class AppState: ObservableObject {
             p.posterizeLevels = 6.0
             p.showPixelGrid = true
             p.gridOpacity = 0.25
+            p.activePalette = nil
             
         case .gameBoy:
-            p.category = .retroPalette
+            p.category = .pixelate
             p.retroPalette = .gameBoy
+            p.activePalette = .gameBoy
             p.pixelSize = 12.0
             p.showPixelGrid = true
             p.gridOpacity = 0.35
@@ -129,10 +132,12 @@ public final class AppState: ObservableObject {
             p.bwMode = .bayer4x4
             p.pixelSize = 8.0
             p.showPixelGrid = false
+            p.activePalette = nil
             
         case .cgaRetro:
-            p.category = .retroPalette
+            p.category = .pixelate
             p.retroPalette = .cgaMode1
+            p.activePalette = .cgaMode1
             p.pixelSize = 10.0
             p.showPixelGrid = true
             p.gridOpacity = 0.2
@@ -143,6 +148,7 @@ public final class AppState: ObservableObject {
             p.chromaticShiftX = 14.0
             p.chromaticShiftY = 2.0
             p.saturation = 1.4
+            p.activePalette = nil
             
         case .crtArcade:
             p.category = .crtArcade
@@ -150,17 +156,20 @@ public final class AppState: ObservableObject {
             p.crtIntensity = 0.55
             p.crtDensity = 2.0
             p.contrast = 1.2
+            p.activePalette = nil
             
         case .greenMatrix:
-            p.category = .retroPalette
+            p.category = .pixelate
             p.retroPalette = .matrixGreen
+            p.activePalette = .matrixGreen
             p.pixelSize = 8.0
             p.showPixelGrid = true
             p.gridOpacity = 0.4
             
         case .amberTerminal:
-            p.category = .retroPalette
+            p.category = .pixelate
             p.retroPalette = .amberCRT
+            p.activePalette = .amberCRT
             p.pixelSize = 10.0
             p.showPixelGrid = true
             p.gridOpacity = 0.3
