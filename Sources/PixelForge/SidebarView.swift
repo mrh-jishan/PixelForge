@@ -7,15 +7,15 @@ public struct SidebarView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 
-                // Mode Picker (matching Channel dropdown layout)
-                Picker("Mode", selection: Binding(
-                    get: { state.filterParams.category },
-                    set: { state.filterParams.category = $0; state.scheduleProcess() }
-                )) {
-                    ForEach(FilterCategory.allCases) { cat in
-                        Label(cat.rawValue, systemImage: cat.iconName).tag(cat)
-                    }
-                }
+                // Mode Picker (auto 100% width)
+                FullWidthPicker(
+                    "Mode",
+                    selection: Binding(
+                        get: { state.filterParams.category },
+                        set: { state.filterParams.category = $0; state.scheduleProcess() }
+                    ),
+                    options: FilterCategory.allCases.map { ($0, $0.rawValue, $0.iconName) }
+                )
                 
                 Divider()
                 
@@ -145,15 +145,15 @@ public struct SidebarView: View {
                 .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundColor(.secondary)
             
-            // Channel Mode
-            Picker("Channel", selection: Binding(
-                get: { state.filterParams.rgbMode },
-                set: { state.filterParams.rgbMode = $0; state.scheduleProcess() }
-            )) {
-                ForEach(RGBChannelMode.allCases) { m in
-                    Text(m.rawValue).tag(m)
-                }
-            }
+            // Channel Mode (auto 100% width)
+            FullWidthPicker(
+                "Channel",
+                selection: Binding(
+                    get: { state.filterParams.rgbMode },
+                    set: { state.filterParams.rgbMode = $0; state.scheduleProcess() }
+                ),
+                options: RGBChannelMode.allCases.map { ($0, $0.rawValue, nil) }
+            )
             
             // Pixel Size
             VStack(alignment: .leading, spacing: 4) {
@@ -225,14 +225,15 @@ public struct SidebarView: View {
                 .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundColor(.secondary)
             
-            Picker("Mode", selection: Binding(
-                get: { state.filterParams.bwMode },
-                set: { state.filterParams.bwMode = $0; state.scheduleProcess() }
-            )) {
-                ForEach(BWMode.allCases) { m in
-                    Text(m.rawValue).tag(m)
-                }
-            }
+            // B&W Mode (auto 100% width)
+            FullWidthPicker(
+                "Mode",
+                selection: Binding(
+                    get: { state.filterParams.bwMode },
+                    set: { state.filterParams.bwMode = $0; state.scheduleProcess() }
+                ),
+                options: BWMode.allCases.map { ($0, $0.rawValue, nil) }
+            )
             
             Text(state.filterParams.bwMode.description)
                 .font(.caption)
