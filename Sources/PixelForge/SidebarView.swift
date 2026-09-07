@@ -394,65 +394,68 @@ public struct SidebarView: View {
     
     // MARK: - Global Adjustments
     private var globalColorControls: some View {
-        DisclosureGroup("Color Adjustments") {
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text("Brightness")
-                            .font(.caption)
-                        Spacer()
-                        Text(String(format: "%+.2f", state.filterParams.brightness))
-                            .font(.caption.monospaced())
-                            .foregroundColor(.secondary)
-                    }
-                    Slider(value: Binding(
-                        get: { state.filterParams.brightness },
-                        set: { state.filterParams.brightness = $0; state.scheduleProcess() }
-                    ), in: -0.4...0.4)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text("Contrast")
-                            .font(.caption)
-                        Spacer()
-                        Text(String(format: "%.2f", state.filterParams.contrast))
-                            .font(.caption.monospaced())
-                            .foregroundColor(.secondary)
-                    }
-                    Slider(value: Binding(
-                        get: { state.filterParams.contrast },
-                        set: { state.filterParams.contrast = $0; state.scheduleProcess() }
-                    ), in: 0.5...2.0)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text("Saturation")
-                            .font(.caption)
-                        Spacer()
-                        Text(String(format: "%.2f", state.filterParams.saturation))
-                            .font(.caption.monospaced())
-                            .foregroundColor(.secondary)
-                    }
-                    Slider(value: Binding(
-                        get: { state.filterParams.saturation },
-                        set: { state.filterParams.saturation = $0; state.scheduleProcess() }
-                    ), in: 0.0...2.0)
-                }
-                
-                Button("Reset Colors") {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("COLOR ADJUSTMENTS")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Button("Reset") {
                     state.filterParams.brightness = 0.0
                     state.filterParams.contrast = 1.0
                     state.filterParams.saturation = 1.0
                     state.scheduleProcess()
                 }
-                .font(.caption)
+                .font(.system(size: 10, weight: .semibold))
                 .buttonStyle(.borderless)
+                .foregroundColor(.secondary)
             }
-            .padding(.top, 6)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Brightness")
+                        .font(.subheadline)
+                    Spacer()
+                    Text(String(format: "%+.2f", state.filterParams.brightness))
+                        .font(.caption.monospaced())
+                        .foregroundColor(.secondary)
+                }
+                Slider(value: Binding(
+                    get: { state.filterParams.brightness },
+                    set: { state.filterParams.brightness = $0; state.scheduleProcess() }
+                ), in: -0.4...0.4)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Contrast")
+                        .font(.subheadline)
+                    Spacer()
+                    Text(String(format: "%.2f", state.filterParams.contrast))
+                        .font(.caption.monospaced())
+                        .foregroundColor(.secondary)
+                }
+                Slider(value: Binding(
+                    get: { state.filterParams.contrast },
+                    set: { state.filterParams.contrast = $0; state.scheduleProcess() }
+                ), in: 0.5...2.0)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Saturation")
+                        .font(.subheadline)
+                    Spacer()
+                    Text(String(format: "%.2f", state.filterParams.saturation))
+                        .font(.caption.monospaced())
+                        .foregroundColor(.secondary)
+                }
+                Slider(value: Binding(
+                    get: { state.filterParams.saturation },
+                    set: { state.filterParams.saturation = $0; state.scheduleProcess() }
+                ), in: 0.0...2.0)
+            }
         }
-        .font(.subheadline)
     }
     
     // MARK: - Presets Shelf
