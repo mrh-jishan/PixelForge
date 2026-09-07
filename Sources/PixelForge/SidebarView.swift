@@ -6,6 +6,53 @@ public struct SidebarView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // File Section (First Section)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("FILE")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 8) {
+                        Button(action: { state.openImagePanel() }) {
+                            Label("Open...", systemImage: "folder")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        
+                        Menu {
+                            Button("Synthwave Sunset") {
+                                state.loadSampleSynthwave()
+                            }
+                            Button("Color Bars & Calibration") {
+                                state.loadSampleColorBars()
+                            }
+                        } label: {
+                            Image(systemName: "sparkles")
+                                .padding(4)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .frame(width: 28)
+                        .help("Load procedural sample scenes")
+                    }
+                    
+                    if state.originalCGImage != nil {
+                        HStack {
+                            Text(state.imageTitle)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(Int(state.imageDimensions.width))×\(Int(state.imageDimensions.height))")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Divider()
+                
                 // Category Picker
                 VStack(alignment: .leading, spacing: 8) {
                     Text("MODE")

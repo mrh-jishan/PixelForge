@@ -10,30 +10,53 @@ struct PixelForgeApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
-            CommandGroup(replacing: .newItem) {}
-            
-            CommandMenu("Image") {
-                Button("Open Image...") {
+            // First Menu Tab: Standard macOS "File" Menu
+            CommandGroup(replacing: .newItem) {
+                Button("Open...") {
                     NotificationCenter.default.post(name: NSNotification.Name("OpenImageRequested"), object: nil)
                 }
                 .keyboardShortcut("o", modifiers: .command)
                 
-                Button("Save Processed Image...") {
+                Menu("Open Sample") {
+                    Button("Synthwave Sunset") {
+                        NotificationCenter.default.post(name: NSNotification.Name("LoadSynthwaveRequested"), object: nil)
+                    }
+                    Button("Color Bars & Calibration Chart") {
+                        NotificationCenter.default.post(name: NSNotification.Name("LoadColorBarsRequested"), object: nil)
+                    }
+                }
+                
+                Divider()
+                
+                Button("Save As...") {
                     NotificationCenter.default.post(name: NSNotification.Name("SaveImageRequested"), object: nil)
                 }
                 .keyboardShortcut("s", modifiers: .command)
                 
-                Button("Copy to Clipboard") {
+                Divider()
+            }
+            
+            // Edit Menu: Copy to Clipboard
+            CommandGroup(replacing: .pasteboard) {
+                Button("Copy Processed Image") {
                     NotificationCenter.default.post(name: NSNotification.Name("CopyImageRequested"), object: nil)
                 }
                 .keyboardShortcut("c", modifiers: .command)
             }
             
+            // View Menu: Display toggles & shortcuts
             CommandMenu("View") {
                 Button("Toggle Split Compare") {
                     NotificationCenter.default.post(name: NSNotification.Name("ToggleSplitCompare"), object: nil)
                 }
                 .keyboardShortcut("d", modifiers: .command)
+                
+                Button("Toggle Original Preview") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ToggleOriginalPreview"), object: nil)
+                }
+                .keyboardShortcut(" ", modifiers: [])
+                
+                Divider()
                 
                 Button("Reset Filters") {
                     NotificationCenter.default.post(name: NSNotification.Name("ResetFilters"), object: nil)

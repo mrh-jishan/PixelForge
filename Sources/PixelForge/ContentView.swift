@@ -17,22 +17,38 @@ public struct ContentView: View {
             }
             .toolbar {
                 ToolbarItemGroup(placement: .automatic) {
-                    Button(action: { state.openImagePanel() }) {
-                        Label("Open Image", systemImage: "folder")
-                    }
-                    .help("Open an image file (⌘O)")
-                    
                     Menu {
-                        Button("Synthwave Sunset") {
-                            state.loadSampleSynthwave()
+                        Button(action: { state.openImagePanel() }) {
+                            Label("Open...", systemImage: "folder")
                         }
-                        Button("Color Bars & Calibration Chart") {
-                            state.loadSampleColorBars()
+                        
+                        Menu("Open Sample") {
+                            Button("Synthwave Sunset") {
+                                state.loadSampleSynthwave()
+                            }
+                            Button("Color Bars & Calibration Chart") {
+                                state.loadSampleColorBars()
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        Button(action: { state.saveImagePanel() }) {
+                            Label("Save As...", systemImage: "square.and.arrow.down")
+                        }
+                        
+                        Button(action: { state.copyToClipboard() }) {
+                            Label("Copy to Clipboard", systemImage: "doc.on.doc")
                         }
                     } label: {
-                        Label("Samples", systemImage: "sparkles")
+                        Label("File", systemImage: "folder")
                     }
-                    .help("Load procedural test scenes")
+                    .help("File operations (Open, Save, Samples)")
+                    
+                    Button(action: { state.openImagePanel() }) {
+                        Label("Open", systemImage: "square.and.arrow.down.on.square")
+                    }
+                    .help("Open an image file (⌘O)")
                     
                     Divider()
                     
@@ -85,6 +101,15 @@ public struct ContentView: View {
             withAnimation {
                 state.showSplitCompare.toggle()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleOriginalPreview"))) { _ in
+            state.showOriginalOnly.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LoadSynthwaveRequested"))) { _ in
+            state.loadSampleSynthwave()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("LoadColorBarsRequested"))) { _ in
+            state.loadSampleColorBars()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetFilters"))) { _ in
             state.resetFilters()
