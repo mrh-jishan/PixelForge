@@ -8,13 +8,37 @@ public struct CanvasViewport: View {
     @State private var dragStartPan: CGSize = .zero
     @State private var isDraggingSplitter: Bool = false
     @State private var isTargetedForDrop: Bool = false
+    @State private var pinchStartZoom: CGFloat? = nil
     
     public var body: some View {
         GeometryReader { proxy in
             ZStack {
-                // Background dark checkerboard for transparency / dark studio mode
+                // Background dark checkerboard
                 CheckerboardBackground()
                     .ignoresSafeArea()
+                
+                // Native Trackpad Pinch & Mouse Wheel Interceptor
+                NativeGestureView(
+                    onMagnify: { delta in
+                        let factor = 1.0 + delta
+                        let newZoom = max(0.05, min(state.zoomScale * factor, 32.0))
+                        state.zoomScale = newZoom
+                    },
+                    onScrollZoom: { delta in
+                        let factor = 1.0 + delta
+                        let newZoom = max(0.05, min(state.zoomScale * factor, 32.0))
+                        state.zoomScale = newZoom
+                    },
+                    onScrollPan: { dx, dy in
+                        if !isDraggingSplitter {
+                            state.panOffset = CGSize(
+                                width: state.panOffset.width + dx,
+                                height: state.panOffset.height + dy
+                            )
+                        }
+                    }
+                )
+                .ignoresSafeArea()
                 
                 if let original = state.originalCGImage {
                     let imageSize = state.imageDimensions
@@ -24,11 +48,9 @@ public struct CanvasViewport: View {
                     // Main image layer with pan & zoom
                     ZStack {
                         if state.showOriginalOnly {
-                            // Quick hold original
                             PixelSharpImageView(cgImage: original)
                                 .frame(width: displayW, height: displayH)
                         } else if state.showSplitCompare, let processed = state.processedCGImage {
-                            // Split Comparison View
                             SplitCompareView(
                                 original: original,
                                 processed: processed,
@@ -38,18 +60,16 @@ public struct CanvasViewport: View {
                                 isDraggingSplitter: $isDraggingSplitter
                             )
                         } else if let processed = state.processedCGImage {
-                            // Filtered image
                             PixelSharpImageView(cgImage: processed)
                                 .frame(width: displayW, height: displayH)
                         } else {
-                            // Fallback to original
                             PixelSharpImageView(cgImage: original)
                                 .frame(width: displayW, height: displayH)
                         }
                     }
                     .offset(state.panOffset)
                     .gesture(
-                        // Pan gesture
+                        // Drag to pan image
                         DragGesture()
                             .onChanged { value in
                                 if !isDraggingSplitter {
@@ -63,17 +83,23 @@ public struct CanvasViewport: View {
                                 dragStartPan = state.panOffset
                             }
                     )
-                    .gesture(
-                        // Pinch to zoom
+                    .simultaneousGesture(
+                        // SwiftUI Pinch Gesture with linear baseline anchor
                         MagnificationGesture()
                             .onChanged { scale in
-                                let newZoom = state.zoomScale * scale
-                                state.zoomScale = max(0.05, min(newZoom, 32.0))
+                                if pinchStartZoom == nil {
+                                    pinchStartZoom = state.zoomScale
+                                }
+                                if let base = pinchStartZoom {
+                                    state.zoomScale = max(0.05, min(base * scale, 32.0))
+                                }
+                            }
+                            .onEnded { _ in
+                                pinchStartZoom = nil
                             }
                     )
                     .onAppear {
                         dragStartPan = state.panOffset
-                        // Auto fit on first appearance if image is larger than canvas
                         if state.zoomScale == 1.0 && (imageSize.width > proxy.size.width || imageSize.height > proxy.size.height) {
                             state.fitToScreen(viewportSize: proxy.size)
                         }
@@ -102,7 +128,7 @@ public struct CanvasViewport: View {
                         .ignoresSafeArea()
                 }
                 
-                // Top HUD / Comparison status badge
+                // Top HUD / Status badge
                 VStack {
                     HStack {
                         if state.showOriginalOnly {
@@ -137,9 +163,71 @@ public struct CanvasViewport: View {
     }
 }
 
-// Crisp Nearest-Neighbor Image Display
+// Native AppKit Gesture View for frictionless trackpad & wheel events
+public struct NativeGestureView: NSViewRepresentable {
+    public var onMagnify: (CGFloat) -> Void
+    public var onScrollZoom: (CGFloat) -> Void
+    public var onScrollPan: (CGFloat, CGFloat) -> Void
+    
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    public func makeNSView(context: Context) -> EventTrackingNSView {
+        let view = EventTrackingNSView()
+        view.coordinator = context.coordinator
+        return view
+    }
+    
+    public func updateNSView(_ nsView: EventTrackingNSView, context: Context) {
+        context.coordinator.parent = self
+    }
+    
+    public class Coordinator {
+        var parent: NativeGestureView
+        init(_ parent: NativeGestureView) {
+            self.parent = parent
+        }
+    }
+    
+    public class EventTrackingNSView: NSView {
+        weak var coordinator: Coordinator?
+        
+        public override var acceptsFirstResponder: Bool { true }
+        
+        public override func magnify(with event: NSEvent) {
+            coordinator?.parent.onMagnify(event.magnification)
+        }
+        
+        public override func scrollWheel(with event: NSEvent) {
+            let isZoomModifier = event.modifierFlags.contains(.command) || event.modifierFlags.contains(.option)
+            if isZoomModifier {
+                let delta = event.hasPreciseScrollingDeltas
+                    ? (event.scrollingDeltaY * 0.006)
+                    : (event.scrollingDeltaY * 0.035)
+                coordinator?.parent.onScrollZoom(delta)
+            } else {
+                // Two finger pan
+                let dx = event.scrollingDeltaX
+                let dy = event.scrollingDeltaY
+                coordinator?.parent.onScrollPan(dx, dy)
+            }
+        }
+    }
+}
+
+// Crisp Nearest-Neighbor Image Display with Image Caching
 public struct PixelSharpImageView: NSViewRepresentable {
     public let cgImage: CGImage
+    
+    public func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    public class Coordinator {
+        var lastCGImageID: CFHashCode?
+        var cachedNSImage: NSImage?
+    }
     
     public func makeNSView(context: Context) -> NSImageView {
         let view = NSImageView()
@@ -151,7 +239,15 @@ public struct PixelSharpImageView: NSViewRepresentable {
     }
     
     public func updateNSView(_ nsView: NSImageView, context: Context) {
-        nsView.image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        let currentID = CFHash(cgImage)
+        if context.coordinator.lastCGImageID != currentID {
+            context.coordinator.lastCGImageID = currentID
+            let newImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+            context.coordinator.cachedNSImage = newImage
+            nsView.image = newImage
+        } else if nsView.image == nil {
+            nsView.image = context.coordinator.cachedNSImage
+        }
         nsView.layer?.magnificationFilter = .nearest
         nsView.layer?.minificationFilter = .nearest
     }
@@ -168,11 +264,11 @@ public struct SplitCompareView: View {
     
     public var body: some View {
         ZStack {
-            // Full Processed Image behind
+            // Processed Image behind
             PixelSharpImageView(cgImage: processed)
                 .frame(width: width, height: height)
             
-            // Original Image clipped to the left of the split
+            // Original Image clipped
             PixelSharpImageView(cgImage: original)
                 .frame(width: width, height: height)
                 .mask(
@@ -184,7 +280,7 @@ public struct SplitCompareView: View {
                     .frame(width: width, height: height)
                 )
             
-            // Split line and handle
+            // Splitter handle
             let splitX = -width / 2.0 + (width * splitPosition)
             
             ZStack {
@@ -193,7 +289,6 @@ public struct SplitCompareView: View {
                     .frame(width: 2, height: height)
                     .shadow(color: .black.opacity(0.6), radius: 3, x: 0, y: 0)
                 
-                // Draggable Pill
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 8, weight: .bold))
