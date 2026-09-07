@@ -1,5 +1,10 @@
 # 👾 PixelForge
 
+[![Build & Release macOS App](https://github.com/mrh-jishan/PixelForge/actions/workflows/release.yml/badge.svg)](https://github.com/mrh-jishan/PixelForge/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/mrh-jishan/PixelForge?color=blue&logo=apple)](https://github.com/mrh-jishan/PixelForge/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey?logo=apple)](https://github.com/mrh-jishan/PixelForge)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 > **High-Performance Native macOS Image Viewer & Retro Pixel Processing Studio**  
 > Built with **Swift 6**, **Metal GPU Compute**, and **Core Image / Accelerate** for Apple Silicon.
 
@@ -51,18 +56,25 @@
 
 ---
 
-## 🚀 How to Run & Build
+## 📥 Download & Installation
 
-### Launch the App
-The compiled and code-signed application bundle is located at:
+### Option 1: Download from GitHub Releases (Recommended)
+1. Go to the [**Releases**](https://github.com/mrh-jishan/PixelForge/releases) page.
+2. Download **`PixelForge-macOS.dmg`** (or `PixelForge-macOS.zip`).
+3. Open the disk image and drag **PixelForge** into your **Applications** folder.
+4. **First Launch (macOS Gatekeeper)**:
+   - Because PixelForge is open-source and built on GitHub Actions without an expensive Apple Developer ID certificate, right-click (or Control-click) `PixelForge.app` in Applications and select **Open** -> **Open**.
+   - Or run once in Terminal:
+     ```bash
+     xattr -cr /Applications/PixelForge.app
+     ```
+
+### Option 2: Build from Source
 ```bash
+git clone https://github.com/mrh-jishan/PixelForge.git
+cd PixelForge
+./build.sh --package
 open PixelForge.app
-```
-
-### Recompile / Rebuild
-You can rebuild the release binary and update the `.app` bundle anytime by running:
-```bash
-./build.sh
 ```
 
 ---

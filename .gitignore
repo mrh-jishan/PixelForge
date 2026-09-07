@@ -2,3 +2,7 @@
 .swiftpm/
 *.xcodeproj
 PixelForge.app
+*.dmg
+*.zip
+checksums.txt
+dmg_staging/

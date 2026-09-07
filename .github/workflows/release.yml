@@ -1,0 +1,93 @@
+name: Build & Release macOS App
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g., v1.0.0)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Native macOS App
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Swift & Xcode environment
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Build and Package PixelForge (.app, .dmg, .zip)
+        run: |
+          chmod +x ./build.sh
+          ./build.sh --package
+
+      - name: Upload Build Artifacts to Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: PixelForge-macOS-Build
+          path: |
+            PixelForge-macOS.dmg
+            PixelForge-macOS.zip
+            checksums.txt
+          if-no-files-found: error
+
+      - name: Determine Release Tag
+        id: release_info
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          elif [[ -n "${{ inputs.tag }}" ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "tag_name=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        if: steps.release_info.outputs.is_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
+          name: PixelForge ${{ steps.release_info.outputs.tag_name }}
+          files: |
+            PixelForge-macOS.dmg
+            PixelForge-macOS.zip
+            checksums.txt
+          generate_release_notes: true
+          body: |
+            ## 👾 PixelForge Native macOS Release
+            
+            High-performance native macOS image viewer & pixel processing studio built with Swift 6 and Metal GPU compute.
+            
+            ### 📦 Downloads
+            - **`PixelForge-macOS.dmg`**: Drag-and-drop macOS disk image installer *(Recommended)*.
+            - **`PixelForge-macOS.zip`**: Standalone zipped application bundle.
+            - **`checksums.txt`**: SHA256 integrity verification.
+            
+            ---
+            
+            ### 🖥️ Installation Instructions
+            
+            1. Download **`PixelForge-macOS.dmg`**.
+            2. Double-click to open the DMG, then drag **PixelForge** into your **Applications** folder.
+            3. Since this build is distributed directly from GitHub without Apple Developer ID notarization, open it the first time by:
+               - Right-clicking (or Control-clicking) **PixelForge** in Applications and selecting **Open** -> **Open**.
+               - Or run in Terminal:
+                 ```bash
+                 xattr -cr /Applications/PixelForge.app
+                 ```

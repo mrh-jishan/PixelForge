@@ -65,6 +65,28 @@ PLIST
 
 # Sign bundle ad-hoc
 codesign --force --deep --sign - "$APP_DIR"
-
 echo "✨ Successfully built $APP_DIR"
-echo "👉 You can run it with: open \"$APP_DIR\""
+
+# Optional packaging for distribution (DMG and ZIP)
+if [ "$1" == "--package" ] || [ "$1" == "-p" ]; then
+    echo "💿 Creating DMG installer..."
+    DMG_NAME="PixelForge-macOS.dmg"
+    ZIP_NAME="PixelForge-macOS.zip"
+    STAGING_DIR="$DIR/dmg_staging"
+    
+    rm -rf "$STAGING_DIR" "$DIR/$DMG_NAME" "$DIR/$ZIP_NAME"
+    mkdir -p "$STAGING_DIR"
+    cp -R "$APP_DIR" "$STAGING_DIR/"
+    ln -s /Applications "$STAGING_DIR/Applications"
+    
+    hdiutil create -volname "PixelForge" -srcfolder "$STAGING_DIR" -ov -format UDZO "$DIR/$DMG_NAME"
+    rm -rf "$STAGING_DIR"
+    
+    echo "🗜️ Creating ZIP archive..."
+    ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$DIR/$ZIP_NAME"
+    
+    echo "📋 Generating SHA256 checksums..."
+    shasum -a 256 "$DMG_NAME" "$ZIP_NAME" > "$DIR/checksums.txt"
+    cat "$DIR/checksums.txt"
+    echo "🎉 Distribution packages created: $DMG_NAME and $ZIP_NAME"
+fi
