@@ -46,6 +46,23 @@ struct PixelForgeApp: App {
             
             // View Menu: Display toggles & shortcuts
             CommandMenu("View") {
+                Button("Zoom In") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ZoomInRequested"), object: nil)
+                }
+                .keyboardShortcut("+", modifiers: .command)
+                
+                Button("Zoom Out") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ZoomOutRequested"), object: nil)
+                }
+                .keyboardShortcut("-", modifiers: .command)
+                
+                Button("Actual Size") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ActualSizeRequested"), object: nil)
+                }
+                .keyboardShortcut("0", modifiers: .command)
+                
+                Divider()
+                
                 Button("Toggle Split Compare") {
                     NotificationCenter.default.post(name: NSNotification.Name("ToggleSplitCompare"), object: nil)
                 }

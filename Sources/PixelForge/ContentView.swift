@@ -114,5 +114,14 @@ public struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ResetFilters"))) { _ in
             state.resetFilters()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ZoomInRequested"))) { _ in
+            state.zoomIn()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ZoomOutRequested"))) { _ in
+            state.zoomOut()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ActualSizeRequested"))) { _ in
+            state.setActualSize()
+        }
     }
 }

@@ -7,22 +7,14 @@ public struct SidebarView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 
-                // Category Picker
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("MODE")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondary)
-                    
-                    Picker("Mode", selection: Binding(
-                        get: { state.filterParams.category },
-                        set: { state.filterParams.category = $0; state.scheduleProcess() }
-                    )) {
-                        ForEach(FilterCategory.allCases) { cat in
-                            Label(cat.rawValue, systemImage: cat.iconName).tag(cat)
-                        }
+                // Mode Picker (matching Channel dropdown layout)
+                Picker("Mode", selection: Binding(
+                    get: { state.filterParams.category },
+                    set: { state.filterParams.category = $0; state.scheduleProcess() }
+                )) {
+                    ForEach(FilterCategory.allCases) { cat in
+                        Label(cat.rawValue, systemImage: cat.iconName).tag(cat)
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
                 }
                 
                 Divider()

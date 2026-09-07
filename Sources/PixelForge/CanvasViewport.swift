@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 public struct CanvasViewport: View {
     @ObservedObject var state: AppState
     
-    @State private var dragStartPan: CGSize = .zero
+    @GestureState private var dragTranslation: CGSize = .zero
     @State private var isDraggingSplitter: Bool = false
     @State private var isTargetedForDrop: Bool = false
     @State private var pinchStartZoom: CGFloat? = nil
@@ -42,45 +42,46 @@ public struct CanvasViewport: View {
                 
                 if let original = state.originalCGImage {
                     let imageSize = state.imageDimensions
-                    let displayW = imageSize.width * state.zoomScale
-                    let displayH = imageSize.height * state.zoomScale
                     
-                    // Main image layer with pan & zoom
+                    // Main image layer with GPU-accelerated pan & zoom
                     ZStack {
                         if state.showOriginalOnly {
                             PixelSharpImageView(cgImage: original)
-                                .frame(width: displayW, height: displayH)
+                                .frame(width: imageSize.width, height: imageSize.height)
                         } else if state.showSplitCompare, let processed = state.processedCGImage {
                             SplitCompareView(
                                 original: original,
                                 processed: processed,
-                                width: displayW,
-                                height: displayH,
+                                width: imageSize.width,
+                                height: imageSize.height,
+                                zoomScale: state.zoomScale,
                                 splitPosition: $state.splitPosition,
                                 isDraggingSplitter: $isDraggingSplitter
                             )
                         } else if let processed = state.processedCGImage {
                             PixelSharpImageView(cgImage: processed)
-                                .frame(width: displayW, height: displayH)
+                                .frame(width: imageSize.width, height: imageSize.height)
                         } else {
                             PixelSharpImageView(cgImage: original)
-                                .frame(width: displayW, height: displayH)
+                                .frame(width: imageSize.width, height: imageSize.height)
                         }
                     }
-                    .offset(state.panOffset)
+                    .scaleEffect(state.zoomScale)
+                    .offset(x: state.panOffset.width + dragTranslation.width,
+                            y: state.panOffset.height + dragTranslation.height)
                     .gesture(
                         // Drag to pan image
                         DragGesture()
-                            .onChanged { value in
+                            .updating($dragTranslation) { value, gestureState, _ in
                                 if !isDraggingSplitter {
-                                    state.panOffset = CGSize(
-                                        width: dragStartPan.width + value.translation.width,
-                                        height: dragStartPan.height + value.translation.height
-                                    )
+                                    gestureState = value.translation
                                 }
                             }
-                            .onEnded { _ in
-                                dragStartPan = state.panOffset
+                            .onEnded { value in
+                                if !isDraggingSplitter {
+                                    state.panOffset.width += value.translation.width
+                                    state.panOffset.height += value.translation.height
+                                }
                             }
                     )
                     .simultaneousGesture(
@@ -99,7 +100,6 @@ public struct CanvasViewport: View {
                             }
                     )
                     .onAppear {
-                        dragStartPan = state.panOffset
                         if state.zoomScale == 1.0 && (imageSize.width > proxy.size.width || imageSize.height > proxy.size.height) {
                             state.fitToScreen(viewportSize: proxy.size)
                         }
@@ -216,40 +216,18 @@ public struct NativeGestureView: NSViewRepresentable {
     }
 }
 
-// Crisp Nearest-Neighbor Image Display with Image Caching
-public struct PixelSharpImageView: NSViewRepresentable {
+// Crisp Nearest-Neighbor Image Display with native SwiftUI Layer
+public struct PixelSharpImageView: View {
     public let cgImage: CGImage
     
-    public func makeCoordinator() -> Coordinator {
-        Coordinator()
+    public init(cgImage: CGImage) {
+        self.cgImage = cgImage
     }
     
-    public class Coordinator {
-        var lastCGImageID: CFHashCode?
-        var cachedNSImage: NSImage?
-    }
-    
-    public func makeNSView(context: Context) -> NSImageView {
-        let view = NSImageView()
-        view.imageScaling = .scaleAxesIndependently
-        view.wantsLayer = true
-        view.layer?.magnificationFilter = .nearest
-        view.layer?.minificationFilter = .nearest
-        return view
-    }
-    
-    public func updateNSView(_ nsView: NSImageView, context: Context) {
-        let currentID = CFHash(cgImage)
-        if context.coordinator.lastCGImageID != currentID {
-            context.coordinator.lastCGImageID = currentID
-            let newImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
-            context.coordinator.cachedNSImage = newImage
-            nsView.image = newImage
-        } else if nsView.image == nil {
-            nsView.image = context.coordinator.cachedNSImage
-        }
-        nsView.layer?.magnificationFilter = .nearest
-        nsView.layer?.minificationFilter = .nearest
+    public var body: some View {
+        Image(decorative: cgImage, scale: 1.0)
+            .interpolation(.none)
+            .resizable()
     }
 }
 
@@ -259,10 +237,13 @@ public struct SplitCompareView: View {
     public let processed: CGImage
     public let width: CGFloat
     public let height: CGFloat
+    public var zoomScale: CGFloat = 1.0
     @Binding public var splitPosition: CGFloat
     @Binding public var isDraggingSplitter: Bool
     
     public var body: some View {
+        let safeScale = max(zoomScale, 0.05)
+        
         ZStack {
             // Processed Image behind
             PixelSharpImageView(cgImage: processed)
@@ -286,8 +267,8 @@ public struct SplitCompareView: View {
             ZStack {
                 Rectangle()
                     .fill(Color.white)
-                    .frame(width: 2, height: height)
-                    .shadow(color: .black.opacity(0.6), radius: 3, x: 0, y: 0)
+                    .frame(width: max(1, 2 / safeScale), height: height)
+                    .shadow(color: .black.opacity(0.6), radius: 3 / safeScale, x: 0, y: 0)
                 
                 HStack(spacing: 4) {
                     Image(systemName: "chevron.left")
@@ -299,14 +280,14 @@ public struct SplitCompareView: View {
                 .frame(width: 28, height: 28)
                 .background(Circle().fill(Color.white))
                 .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
+                .scaleEffect(1.0 / safeScale)
             }
             .offset(x: splitX)
             .gesture(
-                DragGesture()
+                DragGesture(coordinateSpace: .named("splitArea"))
                     .onChanged { value in
                         isDraggingSplitter = true
-                        let localX = value.location.x
-                        let newPos = max(0.01, min(0.99, localX / width))
+                        let newPos = max(0.01, min(0.99, value.location.x / width))
                         splitPosition = newPos
                     }
                     .onEnded { _ in
@@ -325,6 +306,7 @@ public struct SplitCompareView: View {
                         .background(Color.black.opacity(0.7))
                         .foregroundColor(.white)
                         .cornerRadius(4)
+                        .scaleEffect(1.0 / safeScale, anchor: .bottomLeading)
                         .padding(8)
                     Spacer()
                     Text("PIXELATED")
@@ -334,12 +316,14 @@ public struct SplitCompareView: View {
                         .background(Color.accentColor.opacity(0.85))
                         .foregroundColor(.white)
                         .cornerRadius(4)
+                        .scaleEffect(1.0 / safeScale, anchor: .bottomTrailing)
                         .padding(8)
                 }
             }
             .frame(width: width, height: height)
         }
         .frame(width: width, height: height)
+        .coordinateSpace(name: "splitArea")
     }
 }
 

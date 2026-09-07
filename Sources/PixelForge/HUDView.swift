@@ -43,32 +43,43 @@ public struct HUDView: View {
             .cornerRadius(5)
             
             // Zoom Controls
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Button(action: { state.zoomOut() }) {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .bold))
+                        .frame(width: 22, height: 20)
+                        .background(Color.white.opacity(0.12))
+                        .cornerRadius(4)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .help("Zoom Out (⌘-)")
                 
                 Text("\(Int(state.zoomScale * 100))%")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .frame(minWidth: 42)
+                    .frame(minWidth: 44)
                 
                 Button(action: { state.zoomIn() }) {
                     Image(systemName: "plus")
                         .font(.system(size: 10, weight: .bold))
+                        .frame(width: 22, height: 20)
+                        .background(Color.white.opacity(0.12))
+                        .cornerRadius(4)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .help("Zoom In (⌘+)")
                 
                 Button("1:1") {
                     state.setActualSize()
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-                .background(Color.white.opacity(0.1))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Color.white.opacity(0.12))
                 .cornerRadius(4)
+                .help("Actual Size (⌘0)")
             }
             
             // Split Compare Toggle

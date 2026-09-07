@@ -192,28 +192,28 @@ public final class AppState: ObservableObject {
         let scaleY = (viewportSize.height - 60) / imageDimensions.height
         let bestScale = min(scaleX, scaleY)
         
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
             self.zoomScale = max(0.05, min(bestScale, 4.0))
             self.panOffset = .zero
         }
     }
     
     public func setActualSize() {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.88)) {
             self.zoomScale = 1.0
             self.panOffset = .zero
         }
     }
     
     public func zoomIn() {
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.85)) {
-            self.zoomScale = min(self.zoomScale * 1.35, 32.0)
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.88)) {
+            self.zoomScale = min(self.zoomScale * 1.25, 32.0)
         }
     }
     
     public func zoomOut() {
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.85)) {
-            self.zoomScale = max(self.zoomScale / 1.35, 0.05)
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.88)) {
+            self.zoomScale = max(self.zoomScale / 1.25, 0.05)
         }
     }
     
