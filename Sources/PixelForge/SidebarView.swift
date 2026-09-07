@@ -7,15 +7,20 @@ public struct SidebarView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 
-                // Mode Picker (auto 100% width)
-                FullWidthPicker(
-                    "Mode",
-                    selection: Binding(
-                        get: { state.filterParams.category },
-                        set: { state.filterParams.category = $0; state.scheduleProcess() }
-                    ),
-                    options: FilterCategory.allCases.map { ($0, $0.rawValue, $0.iconName) }
-                )
+                // Mode Picker (2-line: label on top, 100% full width dropdown below)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("MODE")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+                    
+                    FullWidthPicker(
+                        selection: Binding(
+                            get: { state.filterParams.category },
+                            set: { state.filterParams.category = $0; state.scheduleProcess() }
+                        ),
+                        options: FilterCategory.allCases.map { ($0, $0.rawValue, $0.iconName) }
+                    )
+                }
                 
                 Divider()
                 

@@ -18,12 +18,11 @@ public struct FullWidthPicker<T: Hashable>: View {
     }
     
     public var body: some View {
-        HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             if !title.isEmpty {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.primary)
-                    .frame(minWidth: 50, alignment: .leading)
+                    .foregroundColor(.secondary)
             }
             
             FullWidthPopUpRepresentable(
